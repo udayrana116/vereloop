@@ -357,9 +357,6 @@
         const analysisSection = document.getElementById('analysis-section');
 
         function renderAnalysis(analysisData) {
-            loadingscreen.style.display = 'none';
-            analysisSection.style.display = 'block';
-
             function createList(items) {
                 return '<ul style="padding-left: 1.25rem;">' + items.map(i => `<li>${i}</li>`).join('') + '</ul>';
             }
@@ -412,6 +409,10 @@
                     method: 'POST',
                     body: formData
                 });
+
+                loadingscreen.style.display = 'none';
+                analysisSection.style.display = 'block';
+                
                 const result = await response.json();
                 //const result = await response.text();
                 renderAnalysis(result);
