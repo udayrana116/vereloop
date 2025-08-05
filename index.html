@@ -199,8 +199,29 @@
         }
 
         #form-section,
+        #loading_screen,
         #analysis-section {
             display: none;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 6px solid #e5e7eb;
+            border-top: 6px solid #7c3aed;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: auto;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
         }
     </style>
 </head>
@@ -255,16 +276,25 @@
         </div>
 
     </div>
+
+    <!--loading_screen -->
+    <div id="loading_screen" style="display: none; text-align: center; padding: 50px;">
+        <div class="spinner"></div>
+        <p style="margin-top: 20px; font-size: 1.2rem; color: #7c3aed;">Analyzing your resume with AI magic...</p>
+    </div>
+
     <!--analysis-section -->
     <div class="container" id="analysis-section"
         style="font-family: 'Inter', sans-serif; max-width: 1000px; margin: auto; padding: 2rem; background: #ffffff; border-radius: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.05);">
     </div>
+
     <script>
         const formSection = document.getElementById('form-section');
+        const loadingscreen = document.getElementById('loading_screen');
         const analysisSection = document.getElementById('analysis-section');
 
         function renderAnalysis(analysisData) {
-            formSection.style.display = 'none';
+            loadingscreen.style.display = 'none';
             analysisSection.style.display = 'block';
 
             function createList(items) {
@@ -310,6 +340,9 @@
             const formData = new FormData();
             formData.append('Upload Resume', resumeFile);
             formData.append('Upload the Job description', jobDesc);
+
+            formSection.style.display = 'none';
+            loadingscreen.style.display = 'block';
 
             try {
                 const response = await fetch('https://udaysingh.app.n8n.cloud/webhook/dea597e9-2b33-4067-a662-3087c45a956d', {
