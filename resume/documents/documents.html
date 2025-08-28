@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Documents</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #f9fafb;
+            padding: 2rem;
+        }
+
+        h1 {
+            color: #111827;
+        }
+
+        .doc-types {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .doc-types div {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            padding: 1rem;
+            flex: 1;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .upload-btn {
+            background: #06b6d4;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            float: right;
+            margin-left: 1rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+            background: white;
+        }
+
+        th,
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid #e5e7eb;
+            text-align: left;
+        }
+
+        .status {
+            background: #d1fae5;
+            color: #065f46;
+            padding: 0.3rem 0.6rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+        }
+
+        .action-btns a,
+        .action-btns button {
+            margin-right: 0.5rem;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-size: 1rem;
+        }
+
+        .delete-btn {
+            color: red;
+        }
+
+        .rename-btn {
+            color: #4b5563;
+        }
+
+        .toolbar {
+            margin-bottom: 1rem;
+        }
+
+        #searchInput {
+            padding: 0.5rem;
+            width: 250px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>My Documents</h1>
+    <p>Manage and tailor all of your job search documents here!</p>
+
+    <div class="toolbar">
+        <input type="text" id="searchInput" placeholder="Search by name or date...">
+        <button class="upload-btn" onclick="document.getElementById('fileInput').click()">Upload a resume</button>
+        <button class="upload-btn" onclick="exportResumes()">Export JSON</button>
+        <button class="upload-btn" onclick="document.getElementById('importInput').click()">Import JSON</button>
+
+        <button class="clear_strg_btn" onclick="localStorage.removeItem('vereloop_resumes'); location.reload();">
+            Clear Stored Resumes
+        </button>
+
+        <input type="file" id="importInput" accept="application/json" style="display: none;">
+    </div>
+
+    <input type="file" id="fileInput" accept=".pdf,.doc,.docx" style="display: none;">
+
+    <div class="doc-types">
+
+        <a href="/resume" style="text-decoration: none;">
+            <div style="
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    background-color: #ffffff;
+    max-width: 480px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+  ">
+                <!-- Icon container -->
+                <div style="
+      background-color: #e0f7ff;
+      border-radius: 50%;
+      padding: 0.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    ">
+                    <img src="data:image/png;base64,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"
+                        alt="Resume Icon" style="height: 100px; width: 150px;">
+                </div>
+
+                <!-- Text -->
+                <div>
+                    <strong style="font-size: 1rem; color: #111827;">Resume</strong><br>
+                    <small style="color: #6b7280;">Craft your perfect resume and tailor it to a job description</small>
+                </div>
+            </div>
+        </a>
+
+        <!-- <a href="/resume"><div><strong >Resume</strong><br><small>Tailor it to a job description</small></div></a> -->
+        <!-- <div><strong>Cover Letter</strong><br><small>Customize with AI</small></div> -->
+        <!-- <div><strong>Question Response</strong><br><small>Generate responses</small></div> -->
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Resume Name</th>
+                <th>Created</th>
+                <th>Last Edited</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="resumeTableBody"></tbody>
+    </table>
+
+    <script>
+        const fileInput = document.getElementById('fileInput');
+        const tableBody = document.getElementById('resumeTableBody');
+        const searchInput = document.getElementById('searchInput');
+        const importInput = document.getElementById('importInput');
+
+        function formatDate(date) {
+            return new Date(date).toLocaleString();
+        }
+
+        function updateTable(filter = '') {
+            const files = JSON.parse(localStorage.getItem('vereloop_resumes') || '[]');
+            tableBody.innerHTML = '';
+            files.forEach((file, index) => {
+                if (filter && !file.name.toLowerCase().includes(filter.toLowerCase()) && !formatDate(file.created).includes(filter)) return;
+                const row = document.createElement('tr');
+                row.innerHTML = `
+          <td><span id="resume-name-${index}">${file.name}</span><div class="status">Uploaded</div></td>
+          <td>${formatDate(file.created)}</td>
+          <td>${formatDate(file.updated)}</td>
+          <td class="action-btns">
+            <a href="${file.url}" target="_blank">👁️</a>
+            <a href="${file.url}" download>⬇️</a>
+            <button class="rename-btn" onclick="renameResume(${index})">✏️</button>
+            <button class="delete-btn" onclick="deleteResume(${index})">🗑️</button>
+          </td>
+        `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        function deleteResume(index) {
+            if (!confirm('Are you sure you want to delete this resume?')) return;
+            const resumes = JSON.parse(localStorage.getItem('vereloop_resumes') || '[]');
+            resumes.splice(index, 1);
+            localStorage.setItem('vereloop_resumes', JSON.stringify(resumes));
+            updateTable(searchInput.value);
+        }
+
+        function renameResume(index) {
+            const resumes = JSON.parse(localStorage.getItem('vereloop_resumes') || '[]');
+            const newName = prompt('Enter a new name:', resumes[index].name);
+            if (newName) {
+                resumes[index].name = newName;
+                resumes[index].updated = Date.now();
+                localStorage.setItem('vereloop_resumes', JSON.stringify(resumes));
+                updateTable(searchInput.value);
+            }
+        }
+
+        function exportResumes() {
+            const dataStr = localStorage.getItem('vereloop_resumes');
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'vereloop_resumes_backup.json';
+            link.click();
+        }
+
+        importInput.addEventListener('change', () => {
+            const file = importInput.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    localStorage.setItem('vereloop_resumes', JSON.stringify(imported));
+                    updateTable();
+                } catch (err) {
+                    alert('Invalid JSON file.');
+                }
+            };
+            reader.readAsText(file);
+        });
+
+        fileInput.addEventListener('change', () => {
+            const file = fileInput.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const dataUrl = e.target.result;
+                const resumes = JSON.parse(localStorage.getItem('vereloop_resumes') || '[]');
+                resumes.push({
+                    name: file.name,
+                    created: Date.now(),
+                    updated: Date.now()
+                   ,url: dataUrl
+                });
+                localStorage.setItem('vereloop_resumes', JSON.stringify(resumes));
+                updateTable(searchInput.value);
+            };
+            reader.readAsDataURL(file);
+        });
+
+        searchInput.addEventListener('input', () => updateTable(searchInput.value));
+
+        updateTable();
+    </script>
+</body>
+
+</html>
