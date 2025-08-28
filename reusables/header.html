@@ -1,0 +1,98 @@
+<!-- header.html -->
+<style>
+    header {
+        background-color: #fff;
+        padding: 1rem 2rem;
+        border-bottom: 1px solid #e5e7eb;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .container {
+        max-width: 900px;
+        margin: 2rem auto;
+        padding: 2rem;
+        background-color: #fff;
+        border-radius: 12px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+    }
+
+    nav {
+        display: flex;
+        gap: 1.5rem;
+        background-color: #f9fafb;
+        padding: 1rem 2rem;
+        font-family: 'Inter', sans-serif;
+        align-items: center;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    nav a {
+        text-decoration: none;
+        color: #111827;
+        font-weight: 500;
+        position: relative;
+    }
+
+    nav a:hover {
+        color: #4f46e5;
+    }
+
+    .dropdown {
+        position: relative;
+    }
+
+    .dropdown-content {
+        display: none;
+        position: absolute;
+        background-color: white;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        top: 100%;
+        left: 0;
+        padding: 0.5rem 0;
+        border-radius: 6px;
+        min-width: 180px;
+        z-index: 1000;
+    }
+
+    .dropdown-content a {
+        display: block;
+        padding: 0.5rem 1rem;
+        color: #1f2937;
+    }
+
+    .dropdown-content a:hover {
+        background-color: #f3f4f6;
+    }
+
+    .dropdown:hover .dropdown-content {
+        display: block;
+    }
+</style>
+
+<header>
+    <a href="/index.html">
+        <img src="https://vereloopadls.blob.core.windows.net/vereloop/favicon_io/android-chrome-512x512.png?sp=r&st=2025-08-14T09:28:45Z&se=2026-08-14T17:43:45Z&spr=https&sv=2024-11-04&sr=b&sig=nS8d9C6YfSwGK60%2FMXPYVTXrEq9hpKOOczVTDROZDl8%3D"
+            alt="Vereloop logo" style="height: 100px; width: 100px; margin-right: 20px;" />
+    </a>
+
+    <nav>
+        <a href="/index.html">Home</a>
+        <!-- <a href="/resume">Resume Tool</a> -->
+
+        <div class="dropdown">
+            <a href="/resume">Resume Tool ▾</a>
+            <div class="dropdown-content">
+                <a href="/resume/dashboard/dashboard.html">Dashboard</a>
+                <a href="/resume/documents/documents.html">Documents</a>
+                <a href="/resume/jobTracker/jobTracker.html">Job Tracker</a>
+                <a href="/resume/matches/matches.html">Matches</a>
+            </div>
+        </div>
+
+        <a href="/time">Time</a>
+        <a href="/finance">Finance</a>
+    </nav>
+
+</header>

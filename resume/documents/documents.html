@@ -95,6 +95,8 @@
 </head>
 
 <body>
+    <div id="header-placeholder"></div>
+
     <h1>My Documents</h1>
     <p>Manage and tailor all of your job search documents here!</p>
 
@@ -166,6 +168,12 @@
     </table>
 
     <script>
+        fetch("/reusables/header.html")
+            .then(res => res.text())
+            .then(html => {
+                document.getElementById("header-placeholder").innerHTML = html;
+            });
+
         const fileInput = document.getElementById('fileInput');
         const tableBody = document.getElementById('resumeTableBody');
         const searchInput = document.getElementById('searchInput');
@@ -252,7 +260,7 @@
                     name: file.name,
                     created: Date.now(),
                     updated: Date.now()
-                   ,url: dataUrl
+                    , url: dataUrl
                 });
                 localStorage.setItem('vereloop_resumes', JSON.stringify(resumes));
                 updateTable(searchInput.value);
