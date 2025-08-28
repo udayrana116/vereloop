@@ -1,0 +1,72 @@
+<!-- navbar.html -->
+<style>
+    nav {
+        display: flex;
+        gap: 1.5rem;
+        background-color: #f9fafb;
+        padding: 1rem 2rem;
+        font-family: 'Inter', sans-serif;
+        align-items: center;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    nav a {
+        text-decoration: none;
+        color: #111827;
+        font-weight: 500;
+        position: relative;
+    }
+
+    nav a:hover {
+        color: #4f46e5;
+    }
+
+    .dropdown {
+        position: relative;
+    }
+
+    .dropdown-content {
+        display: none;
+        position: absolute;
+        background-color: white;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        top: 100%;
+        left: 0;
+        padding: 0.5rem 0;
+        border-radius: 6px;
+        min-width: 180px;
+        z-index: 1000;
+    }
+
+    .dropdown-content a {
+        display: block;
+        padding: 0.5rem 1rem;
+        color: #1f2937;
+    }
+
+    .dropdown-content a:hover {
+        background-color: #f3f4f6;
+    }
+
+    .dropdown:hover .dropdown-content {
+        display: block;
+    }
+</style>
+
+<nav>
+    <a href="/index.html">Home</a>
+    <!-- <a href="/resume">Resume Tool</a> -->
+
+    <div class="dropdown">
+        <a href="/resume">Resume Tool ▾</a>
+        <div class="dropdown-content">
+            <a href="/resume/dashboard/dashboard.html">Dashboard</a>
+            <a href="/resume/documents/documents.html">Documents</a>
+            <a href="/resume/jobTracker/jobTracker.html">Job Tracker</a>
+            <a href="/resume/matches/matches.html">Matches</a>
+        </div>
+    </div>
+
+    <a href="/time">Time</a>
+    <a href="/finance">Finance</a>
+</nav>
