@@ -26,17 +26,6 @@
       justify-content: space-between;
     }
 
-    nav a {
-      margin-left: 1.5rem;
-      text-decoration: none;
-      color: #1f2937;
-      font-weight: 500;
-    }
-
-    nav a:hover {
-      color: #4f46e5;
-    }
-
     .hero {
       text-align: center;
       padding: 4rem 2rem;
@@ -119,6 +108,55 @@
       color: #4f46e5;
       text-decoration: none;
     }
+
+    nav {
+      display: flex;
+      gap: 1.5rem;
+      background-color: #f9fafb;
+      padding: 1rem;
+      font-family: sans-serif;
+      position: relative;
+    }
+
+    nav a {
+      text-decoration: none;
+      color: #111827;
+      font-weight: 500;
+      position: relative;
+    }
+
+    .dropdown {
+      position: relative;
+    }
+
+    .dropdown-content {
+      display: none;
+      position: absolute;
+      background-color: white;
+      box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+      padding: 0.5rem 0;
+      top: 100%;
+      /* push below the link */
+      left: 0;
+      z-index: 100;
+      border-radius: 6px;
+      min-width: 180px;
+    }
+
+    .dropdown-content a {
+      display: block;
+      padding: 0.5rem 1rem;
+      color: #1f2937;
+      text-decoration: none;
+    }
+
+    .dropdown-content a:hover {
+      background-color: #f3f4f6;
+    }
+
+    .dropdown:hover .dropdown-content {
+      display: block;
+    }
   </style>
 </head>
 
@@ -131,7 +169,18 @@
     </a>
     <nav>
       <a href="/index.html">Home</a>
-      <a href="/resume">Resume Tool</a>
+      <!-- <a href="/resume">Resume Tool</a> -->
+
+      <div class="dropdown">
+        <a href="/resume">Resume Tool ▾</a>
+        <div class="dropdown-content">
+          <a href="/resume/dashboard">Dashboard</a>
+          <a href="/resume/documents">Documents</a>
+          <a href="/resume/jobTracker">Job Tracker</a>
+          <a href="/resume/matches">Matches</a>
+        </div>
+      </div>
+
       <a href="/time">Time</a>
       <a href="/finance">Finance</a>
     </nav>
@@ -175,8 +224,3 @@
 </body>
 
 </html>
-
-
-
-
-
