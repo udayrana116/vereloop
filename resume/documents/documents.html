@@ -255,7 +255,7 @@
             const reader = new FileReader();
             reader.onload = function (e) {
                 // const dataUrl = e.target.result;
-                const dataUrl = URL.createObjectURL(e);
+                const dataUrl = URL.createObjectURL(file);
                 const resumes = JSON.parse(localStorage.getItem('vereloop_resumes') || '[]');
                 resumes.push({
                     name: file.name,
