@@ -389,6 +389,8 @@
             const resumes = JSON.parse(localStorage.getItem('vereloop_resumes') || '[]');
             resumes.splice([a.length - 1], 1);
             localStorage.setItem('vereloop_resumes', JSON.stringify(resumes));
+            updateTable(searchInput.value);
+            reader.readAsDataURL(file);
         });
 
 
