@@ -353,23 +353,6 @@
             viewFileBtn.onclick = () => {
                 window.open(resumeBlobURL, '_blank');
             };
-
-
-            const reader = new FileReader();
-            reader.onload = function (e) {
-                // const dataUrl = e.target.result;
-                const dataUrl = URL.createObjectURL(file);
-                const resumes = JSON.parse(localStorage.getItem('vereloop_resumes') || '[]');
-                resumes.push({
-                    name: file.name,
-                    created: Date.now(),
-                    updated: Date.now()
-                    , url: dataUrl
-                });
-                localStorage.setItem('vereloop_resumes', JSON.stringify(resumes));
-                updateTable(searchInput.value);
-            };
-            reader.readAsDataURL(file);
         });
 
         removeFileBtn.addEventListener('click', () => {
@@ -384,13 +367,6 @@
                 URL.revokeObjectURL(resumeBlobURL);
                 resumeBlobURL = null;
             }
-
-
-            const resumes = JSON.parse(localStorage.getItem('vereloop_resumes') || '[]');
-            resumes.splice([a.length - 1], 1);
-            localStorage.setItem('vereloop_resumes', JSON.stringify(resumes));
-            updateTable(searchInput.value);
-            reader.readAsDataURL(file);
         });
 
 
@@ -446,6 +422,22 @@
 
             formSection.style.display = 'none';
             loadingscreen.style.display = 'block';
+
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                // const dataUrl = e.target.result;
+                const dataUrl = URL.createObjectURL(file);
+                const resumes = JSON.parse(localStorage.getItem('vereloop_resumes') || '[]');
+                resumes.push({
+                    name: file.name,
+                    created: Date.now(),
+                    updated: Date.now()
+                    , url: dataUrl
+                });
+                localStorage.setItem('vereloop_resumes', JSON.stringify(resumes));
+                updateTable(searchInput.value);
+            };
+            reader.readAsDataURL(file);
 
             try {
                 const response = await fetch('https://n8n.srv968815.hstgr.cloud/webhook/dea597e9-2b33-4067-a662-3087c45a956d', {
