@@ -254,7 +254,8 @@
 
             const reader = new FileReader();
             reader.onload = function (e) {
-                const dataUrl = e.target.result;
+                // const dataUrl = e.target.result;
+                const dataUrl = URL.createObjectURL(e);
                 const resumes = JSON.parse(localStorage.getItem('vereloop_resumes') || '[]');
                 resumes.push({
                     name: file.name,
@@ -268,7 +269,7 @@
             reader.readAsDataURL(file);
         });
 
-        searchInput.addEventListener('input', () => updateTable(searchInput.value));
+        searchInput.addEventListener('input', () =>  (searchInput.value));
 
         updateTable();
     </script>
