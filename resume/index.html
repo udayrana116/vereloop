@@ -443,10 +443,10 @@
             const reader = new FileReader();
             reader.onload = function (e) {
                 // const dataUrl = e.target.result;
-                const dataUrl = URL.createObjectURL(file);
+                const dataUrl = URL.createObjectURL(resumeFile);
                 const resumes = JSON.parse(localStorage.getItem('vereloop_resumes') || '[]');
                 resumes.push({
-                    name: file.name,
+                    name: resumeFile.name,
                     created: Date.now(),
                     updated: Date.now()
                     , url: dataUrl
@@ -454,7 +454,7 @@
                 localStorage.setItem('vereloop_resumes', JSON.stringify(resumes));
                 updateTable(searchInput.value);
             };
-            reader.readAsDataURL(file);
+            reader.readAsDataURL(resumeFile);
 
         });
 
