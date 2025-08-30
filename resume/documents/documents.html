@@ -184,7 +184,7 @@
         }
 
         function updateTable(filter = '') {
-            const files = JSON.parse(localStorage.getItem('vereloop_resumes') || '[]');
+            C
             tableBody.innerHTML = '';
             files.forEach((file, index) => {
                 if (filter && !file.name.toLowerCase().includes(filter.toLowerCase()) && !formatDate(file.created).includes(filter)) return;
