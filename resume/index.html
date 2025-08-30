@@ -408,6 +408,16 @@
         `;
         }
 
+        function addResumeRecord({ name, mime, blob }) {
+            return new Promise((resolve, reject) => {
+                const now = Date.now();
+                const [tx, store] = txStore('readwrite');
+                const req = store.add({ name, mime, created: now, updated: now, data: blob });
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = () => reject(req.error);
+            });
+        }
+
         document.getElementById('analyzeBtn').addEventListener('click', async () => {
             const resumeFile = document.getElementById('resumeFile').files[0];
             const jobDesc = document.getElementById('jobDescription').value.trim();
