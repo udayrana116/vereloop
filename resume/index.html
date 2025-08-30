@@ -440,26 +440,28 @@
                 alert("Failed to analyze resume: " + err);
             }
 
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                // const dataUrl = e.target.result;
+                const dataUrl = URL.createObjectURL(file);
+                const resumes = JSON.parse(localStorage.getItem('vereloop_resumes') || '[]');
+                resumes.push({
+                    name: file.name,
+                    created: Date.now(),
+                    updated: Date.now()
+                    , url: dataUrl
+                });
+                localStorage.setItem('vereloop_resumes', JSON.stringify(resumes));
+                updateTable(searchInput.value);
+            };
+            reader.readAsDataURL(file);
+
         });
 
         // Default view
         formSection.style.display = 'block';
 
-        const reader = new FileReader();
-        reader.onload = function (e) {
-            // const dataUrl = e.target.result;
-            const dataUrl = URL.createObjectURL(file);
-            const resumes = JSON.parse(localStorage.getItem('vereloop_resumes') || '[]');
-            resumes.push({
-                name: file.name,
-                created: Date.now(),
-                updated: Date.now()
-                , url: dataUrl
-            });
-            localStorage.setItem('vereloop_resumes', JSON.stringify(resumes));
-            updateTable(searchInput.value);
-        };
-        reader.readAsDataURL(file);
+
     </script>
 </body>
 
