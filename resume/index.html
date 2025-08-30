@@ -440,21 +440,9 @@
                 alert("Failed to analyze resume: " + err);
             }
 
-            const reader = new FileReader();
-            reader.onload = function (e) {
-                // const dataUrl = e.target.result;
-                const dataUrl = URL.createObjectURL(resumeFile);
-                const resumes = JSON.parse(localStorage.getItem('vereloop_resumes') || '[]');
-                resumes.push({
-                    name: resumeFile.name,
-                    created: Date.now(),
-                    updated: Date.now()
-                    , url: dataUrl
-                });
-                localStorage.setItem('vereloop_resumes', JSON.stringify(resumes));
-                updateTable(searchInput.value);
-            };
-            reader.readAsDataURL(resumeFile);
+            // Store the File directly as a Blob in IDB
+            await addResumeRecord({ name: resumeFile.name, mime: resumeFile.type || 'application/octet-stream', blob: resumeFile });
+            fileInput.value = '';
 
         });
 

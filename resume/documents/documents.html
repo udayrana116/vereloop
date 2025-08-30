@@ -2,24 +2,119 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Documents</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>My Documents (IndexedDB)</title>
     <style>
         body {
             font-family: 'Segoe UI', sans-serif;
             background: #f9fafb;
             padding: 2rem;
+            color: #111827;
         }
 
         h1 {
+            margin-bottom: .25rem;
+        }
+
+        .sub {
+            color: #6b7280;
+            margin-top: 0;
+        }
+
+        /* Storage summary */
+        .storage-card {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 1rem 1.25rem;
+            margin: 1rem 0 1.5rem;
+            display: grid;
+            gap: .5rem;
+        }
+
+        .storage-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 1rem;
+            align-items: end;
+        }
+
+        .kpi {
+            display: flex;
+            flex-direction: column;
+            gap: .25rem;
+        }
+
+        .kpi .label {
+            font-size: .85rem;
+            color: #6b7280;
+        }
+
+        .kpi .value {
+            font-weight: 600;
+        }
+
+        .bar-wrap {
+            grid-column: 1 / -1;
+        }
+
+        .bar-bg {
+            width: 100%;
+            height: 12px;
+            background: #eef2ff;
+            border-radius: 9999px;
+            overflow: hidden;
+        }
+
+        .bar-fill {
+            height: 100%;
+            width: 0%;
+            background: #4f46e5;
+            transition: width .6s ease;
+        }
+
+        .footnote {
+            font-size: .85rem;
+            color: #6b7280;
+        }
+
+        .toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: .5rem;
+            margin-bottom: 1rem;
+        }
+
+        .btn {
+            padding: .55rem .9rem;
+            border-radius: 6px;
+            cursor: pointer;
+            border: 1px solid transparent;
+        }
+
+        .btn-primary {
+            background: #06b6d4;
+            color: #fff;
+        }
+
+        .btn-ghost {
+            background: #fff;
             color: #111827;
+            border-color: #e5e7eb;
+        }
+
+        #searchInput {
+            padding: .55rem .7rem;
+            width: 260px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
         }
 
         .doc-types {
             display: flex;
             gap: 1rem;
-            margin-bottom: 2rem;
+            margin: 1rem 0 1rem;
         }
 
         .doc-types div {
@@ -31,22 +126,13 @@
             text-align: center;
         }
 
-        .upload-btn {
-            background: #06b6d4;
-            color: white;
-            border: none;
-            padding: 0.5rem 1rem;
-            border-radius: 6px;
-            cursor: pointer;
-            float: right;
-            margin-left: 1rem;
-        }
-
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 1rem;
-            background: white;
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            overflow: hidden;
         }
 
         th,
@@ -54,19 +140,31 @@
             padding: 1rem;
             border-bottom: 1px solid #e5e7eb;
             text-align: left;
+            font-size: .95rem;
+        }
+
+        th {
+            background: #f9fafb;
+            color: #374151;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
         }
 
         .status {
             background: #d1fae5;
             color: #065f46;
-            padding: 0.3rem 0.6rem;
+            padding: .2rem .55rem;
             border-radius: 20px;
-            font-size: 0.8rem;
+            font-size: .8rem;
+            display: inline-block;
+            margin-top: .35rem;
         }
 
         .action-btns a,
         .action-btns button {
-            margin-right: 0.5rem;
+            margin-right: .4rem;
             cursor: pointer;
             border: none;
             background: none;
@@ -74,22 +172,22 @@
         }
 
         .delete-btn {
-            color: red;
+            color: #dc2626;
         }
 
         .rename-btn {
             color: #4b5563;
         }
 
-        .toolbar {
-            margin-bottom: 1rem;
+        tfoot td {
+            background: #fafafa;
+            font-weight: 600;
         }
 
-        #searchInput {
-            padding: 0.5rem;
-            width: 250px;
-            border: 1px solid #d1d5db;
-            border-radius: 6px;
+        @media (max-width: 720px) {
+            .storage-grid {
+                grid-template-columns: 1fr 1fr;
+            }
         }
     </style>
 </head>
@@ -98,22 +196,47 @@
     <div id="header-placeholder"></div>
 
     <h1>My Documents</h1>
-    <p>Manage and tailor all of your job search documents here!</p>
+    <p class="sub">Manage and tailor all of your job search documents here (stored locally via IndexedDB).</p>
+
+    <!-- Storage Summary -->
+    <section class="storage-card">
+        <div class="storage-grid">
+            <div class="kpi">
+                <span class="label">Quota (origin)</span>
+                <span class="value" id="quotaVal">—</span>
+            </div>
+            <div class="kpi">
+                <span class="label">Used (origin)</span>
+                <span class="value" id="usedVal">—</span>
+            </div>
+            <div class="kpi">
+                <span class="label">Remaining (origin)</span>
+                <span class="value" id="leftVal">—</span>
+            </div>
+            <div class="kpi">
+                <span class="label">Resumes Total</span>
+                <span class="value" id="resumesTotalVal">—</span>
+            </div>
+            <div class="bar-wrap">
+                <div class="bar-bg">
+                    <div class="bar-fill" id="usageBar"></div>
+                </div>
+            </div>
+        </div>
+        <div class="footnote">* Estimates include all storage for this origin (IndexedDB, Cache, localStorage, etc.).
+            Per-file sizes here are exact (Blob sizes).</div>
+    </section>
 
     <div class="toolbar">
         <input type="text" id="searchInput" placeholder="Search by name or date...">
-        <button class="upload-btn" onclick="document.getElementById('fileInput').click()">Upload a resume</button>
-        <button class="upload-btn" onclick="exportResumes()">Export JSON</button>
-        <button class="upload-btn" onclick="document.getElementById('importInput').click()">Import JSON</button>
-
-        <button class="clear_strg_btn" onclick="localStorage.removeItem('vereloop_resumes'); location.reload();">
-            Clear Stored Resumes
-        </button>
-
-        <input type="file" id="importInput" accept="application/json" style="display: none;">
+        <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">Upload a resume</button>
+        <button class="btn btn-ghost" onclick="exportMetadata()">Export Metadata JSON</button>
+        <button class="btn btn-ghost" onclick="document.getElementById('importInput').click()">Import JSON (migrates
+            data URLs)</button>
     </div>
 
-    <input type="file" id="fileInput" accept=".pdf,.doc,.docx" style="display: none;">
+    <input type="file" id="fileInput" accept=".pdf,.doc,.docx" style="display:none;">
+    <input type="file" id="importInput" accept="application/json" style="display:none;">
 
     <div class="doc-types">
 
@@ -159,12 +282,20 @@
         <thead>
             <tr>
                 <th>Resume Name</th>
+                <th>Size</th>
                 <th>Created</th>
                 <th>Last Edited</th>
                 <th>Actions</th>
             </tr>
         </thead>
         <tbody id="resumeTableBody"></tbody>
+        <tfoot>
+            <tr>
+                <td><em>Total</em></td>
+                <td id="tableTotalSize">—</td>
+                <td colspan="3"></td>
+            </tr>
+        </tfoot>
     </table>
 
     <script>
@@ -174,104 +305,284 @@
                 document.getElementById("header-placeholder").innerHTML = html;
             });
 
-        const fileInput = document.getElementById('fileInput');
-        const tableBody = document.getElementById('resumeTableBody');
-        const searchInput = document.getElementById('searchInput');
-        const importInput = document.getElementById('importInput');
+        /* =========================
+           IndexedDB setup
+        ========================= */
+        const DB_NAME = 'vereloop';
+        const STORE = 'resumes';
+        let db;
 
-        function formatDate(date) {
-            return new Date(date).toLocaleString();
-        }
-
-        function updateTable(filter = '') {
-            const files = JSON.parse(localStorage.getItem('vereloop_resumes') || '[]');
-            tableBody.innerHTML = '';
-            files.forEach((file, index) => {
-                if (filter && !file.name.toLowerCase().includes(filter.toLowerCase()) && !formatDate(file.created).includes(filter)) return;
-                const row = document.createElement('tr');
-                row.innerHTML = `
-          <td><span id="resume-name-${index}">${file.name}</span><div class="status">Uploaded</div></td>
-          <td>${formatDate(file.created)}</td>
-          <td>${formatDate(file.updated)}</td>
-          <td class="action-btns">
-            <a href="${file.url}" target="_blank">👁️</a>
-            <a href="${file.url}" download>⬇️</a>
-            <button class="rename-btn" onclick="renameResume(${index})">✏️</button>
-            <button class="delete-btn" onclick="deleteResume(${index})">🗑️</button>
-          </td>
-        `;
-                tableBody.appendChild(row);
+        function openDB() {
+            return new Promise((resolve, reject) => {
+                const req = indexedDB.open(DB_NAME, 1);
+                req.onupgradeneeded = (e) => {
+                    const _db = e.target.result;
+                    if (!_db.objectStoreNames.contains(STORE)) {
+                        const os = _db.createObjectStore(STORE, { keyPath: 'id', autoIncrement: true });
+                        os.createIndex('name', 'name', { unique: false });
+                        os.createIndex('created', 'created', { unique: false });
+                    }
+                };
+                req.onsuccess = () => { db = req.result; resolve(db); };
+                req.onerror = () => reject(req.error);
             });
         }
 
-        function deleteResume(index) {
-            if (!confirm('Are you sure you want to delete this resume?')) return;
-            const resumes = JSON.parse(localStorage.getItem('vereloop_resumes') || '[]');
-            resumes.splice(index, 1);
-            localStorage.setItem('vereloop_resumes', JSON.stringify(resumes));
-            updateTable(searchInput.value);
+        function txStore(mode = 'readonly') {
+            const tx = db.transaction(STORE, mode);
+            return [tx, tx.objectStore(STORE)];
         }
 
-        function renameResume(index) {
-            const resumes = JSON.parse(localStorage.getItem('vereloop_resumes') || '[]');
-            const newName = prompt('Enter a new name:', resumes[index].name);
-            if (newName) {
-                resumes[index].name = newName;
-                resumes[index].updated = Date.now();
-                localStorage.setItem('vereloop_resumes', JSON.stringify(resumes));
-                updateTable(searchInput.value);
+        function getAllResumes() {
+            return new Promise((resolve, reject) => {
+                const [tx, store] = txStore('readonly');
+                const r = store.getAll();
+                r.onsuccess = () => resolve(r.result || []);
+                r.onerror = () => reject(r.error);
+            });
+        }
+
+        function addResumeRecord({ name, mime, blob }) {
+            return new Promise((resolve, reject) => {
+                const now = Date.now();
+                const [tx, store] = txStore('readwrite');
+                const req = store.add({ name, mime, created: now, updated: now, data: blob });
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = () => reject(req.error);
+            });
+        }
+
+        function updateResumeName(id, newName) {
+            return new Promise(async (resolve, reject) => {
+                const [tx, store] = txStore('readwrite');
+                const getReq = store.get(id);
+                getReq.onsuccess = () => {
+                    const rec = getReq.result;
+                    if (!rec) return reject(new Error('Not found'));
+                    rec.name = newName;
+                    rec.updated = Date.now();
+                    const putReq = store.put(rec);
+                    putReq.onsuccess = () => resolve(true);
+                    putReq.onerror = () => reject(putReq.error);
+                };
+                getReq.onerror = () => reject(getReq.error);
+            });
+        }
+
+        function deleteResumeById(id) {
+            return new Promise((resolve, reject) => {
+                const [tx, store] = txStore('readwrite');
+                const req = store.delete(id);
+                req.onsuccess = () => resolve(true);
+                req.onerror = () => reject(req.error);
+            });
+        }
+
+        function getResumeById(id) {
+            return new Promise((resolve, reject) => {
+                const [tx, store] = txStore('readonly');
+                const req = store.get(id);
+                req.onsuccess = () => resolve(req.result || null);
+                req.onerror = () => reject(req.error);
+            });
+        }
+
+        /* =========================
+           UI helpers
+        ========================= */
+        const fileInput = document.getElementById('fileInput');
+        const importInput = document.getElementById('importInput');
+        const tableBody = document.getElementById('resumeTableBody');
+        const searchInput = document.getElementById('searchInput');
+        const usageBar = document.getElementById('usageBar');
+        const quotaVal = document.getElementById('quotaVal');
+        const usedVal = document.getElementById('usedVal');
+        const leftVal = document.getElementById('leftVal');
+        const resumesTotalVal = document.getElementById('resumesTotalVal');
+        const tableTotalSizeEl = document.getElementById('tableTotalSize');
+
+        function formatBytes(n) {
+            if (n == null) return '—';
+            const u = ['B', 'KB', 'MB', 'GB', 'TB'];
+            let i = 0;
+            while (n >= 1024 && i < u.length - 1) { n /= 1024; i++; }
+            const fixed = (n < 10 && i > 0) ? n.toFixed(1) : Math.round(n);
+            return `${fixed} ${u[i]}`;
+        }
+        function formatDate(d) { return new Date(d).toLocaleString(); }
+
+        async function refreshStorageEstimate() {
+            try {
+                const { usage = 0, quota = 0 } = await (navigator.storage?.estimate?.() ?? {});
+                const remaining = Math.max(quota - usage, 0);
+                quotaVal.textContent = formatBytes(quota);
+                usedVal.textContent = formatBytes(usage);
+                leftVal.textContent = formatBytes(remaining);
+                const percent = quota ? Math.min(100, Math.round((usage / quota) * 100)) : 0;
+                usageBar.style.width = percent + '%';
+            } catch {
+                quotaVal.textContent = usedVal.textContent = leftVal.textContent = '—';
+                usageBar.style.width = '0%';
             }
         }
 
-        function exportResumes() {
-            const dataStr = localStorage.getItem('vereloop_resumes');
-            const blob = new Blob([dataStr], { type: 'application/json' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = 'vereloop_resumes_backup.json';
-            link.click();
+        async function updateTable(filter = '') {
+            const items = await getAllResumes();
+            tableBody.innerHTML = '';
+            let tableTotal = 0;
+
+            items.forEach((rec) => {
+                const createdStr = formatDate(rec.created);
+                const match = !filter ||
+                    rec.name.toLowerCase().includes(filter.toLowerCase()) ||
+                    createdStr.includes(filter);
+                if (!match) return;
+
+                const size = rec.data?.size ?? 0;
+                tableTotal += size;
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+      <td>
+        <span>${rec.name}</span>
+        <div class="status">Uploaded</div>
+      </td>
+      <td>${formatBytes(size)}</td>
+      <td>${createdStr}</td>
+      <td>${formatDate(rec.updated)}</td>
+      <td class="action-btns">
+        <button title="View" onclick="viewResume(${rec.id})">👁️</button>
+        <button title="Download" onclick="downloadResume(${rec.id}, '${cssEscapeAttr(rec.name)}')">⬇️</button>
+        <button class="rename-btn" title="Rename" onclick="promptRename(${rec.id}, '${cssEscapeAttr(rec.name)}')">✏️</button>
+        <button class="delete-btn" title="Delete" onclick="confirmDelete(${rec.id})">🗑️</button>
+      </td>
+    `;
+                tableBody.appendChild(tr);
+            });
+
+            tableTotalSizeEl.textContent = formatBytes(tableTotal);
+            resumesTotalVal.textContent = formatBytes(tableTotal);
+            refreshStorageEstimate();
         }
 
-        importInput.addEventListener('change', () => {
+        // Escape quotes for inline attribute usage
+        function cssEscapeAttr(s = '') {
+            return s.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        }
+
+        /* =========================
+           Actions
+        ========================= */
+        async function viewResume(id) {
+            const rec = await getResumeById(id);
+            if (!rec || !rec.data) return alert('Not found');
+            const url = URL.createObjectURL(rec.data);
+            window.open(url, '_blank');
+            setTimeout(() => URL.revokeObjectURL(url), 10000);
+        }
+
+        async function downloadResume(id, name = 'resume') {
+            const rec = await getResumeById(id);
+            if (!rec || !rec.data) return alert('Not found');
+            const url = URL.createObjectURL(rec.data);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = name;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 10000);
+        }
+
+        async function promptRename(id, currentName) {
+            const newName = prompt('Enter a new name:', currentName);
+            if (!newName || !newName.trim()) return;
+            await updateResumeName(id, newName.trim());
+            updateTable(searchInput.value);
+        }
+
+        async function confirmDelete(id) {
+            if (!confirm('Are you sure you want to delete this resume?')) return;
+            await deleteResumeById(id);
+            updateTable(searchInput.value);
+        }
+
+        /* =========================
+           Import / Export
+        ========================= */
+        async function exportMetadata() {
+            const items = await getAllResumes();
+            const meta = items.map(r => ({
+                id: r.id, name: r.name, created: r.created, updated: r.updated, mime: r.mime, size: r.data?.size || 0
+            }));
+            const blob = new Blob([JSON.stringify(meta, null, 2)], { type: 'application/json' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'vereloop_resumes_metadata.json';
+            document.body.appendChild(a); a.click(); a.remove();
+            setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+        }
+
+        // Import migration: accepts an array where items may include `url: data:...` (old localStorage backup)
+        importInput.addEventListener('change', async () => {
             const file = importInput.files[0];
             if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function (e) {
-                try {
-                    const imported = JSON.parse(e.target.result);
-                    localStorage.setItem('vereloop_resumes', JSON.stringify(imported));
-                    updateTable();
-                } catch (err) {
-                    alert('Invalid JSON file.');
+            try {
+                const text = await file.text();
+                const arr = JSON.parse(text);
+                if (!Array.isArray(arr)) throw new Error('Expected an array');
+
+                // Add each record. If it contains a data URL, convert to Blob and store.
+                for (const item of arr) {
+                    let blob = null, mime = item.mime || 'application/octet-stream';
+                    if (item.url && typeof item.url === 'string' && item.url.startsWith('data:')) {
+                        // Convert data URL -> Blob
+                        blob = await (await fetch(item.url)).blob();
+                        mime = blob.type || mime;
+                    }
+                    if (blob) {
+                        await addResumeRecord({ name: item.name || 'Imported Resume', mime, blob });
+                    } else {
+                        // If no data, skip or create a lightweight placeholder (optional)
+                        // Skipping to avoid empty records.
+                    }
                 }
-            };
-            reader.readAsText(file);
+                alert('Import completed.');
+                updateTable();
+            } catch (e) {
+                console.error(e);
+                alert('Invalid JSON or import failed.');
+            } finally {
+                importInput.value = '';
+            }
         });
 
-        fileInput.addEventListener('change', () => {
+        /* =========================
+           Upload
+        ========================= */
+        fileInput.addEventListener('change', async () => {
             const file = fileInput.files[0];
             if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function (e) {
-                // const dataUrl = e.target.result;
-                const dataUrl = URL.createObjectURL(file);
-                const resumes = JSON.parse(localStorage.getItem('vereloop_resumes') || '[]');
-                resumes.push({
-                    name: file.name,
-                    created: Date.now(),
-                    updated: Date.now()
-                    , url: dataUrl
-                });
-                localStorage.setItem('vereloop_resumes', JSON.stringify(resumes));
-                updateTable(searchInput.value);
-            };
-            reader.readAsDataURL(file);
+            // Store the File directly as a Blob in IDB
+            await addResumeRecord({ name: file.name, mime: file.type || 'application/octet-stream', blob: file });
+            fileInput.value = '';
+            updateTable(searchInput.value);
         });
 
-        searchInput.addEventListener('input', () =>  (searchInput.value));
+        /* =========================
+           Search
+        ========================= */
+        searchInput.addEventListener('input', () => updateTable(searchInput.value));
 
-        updateTable();
+        /* =========================
+           Init
+        ========================= */
+        (async function init() {
+            await openDB();
+            updateTable();
+            // Optional: request persistent storage (reduces eviction risk)
+            try { await navigator.storage?.persist?.(); } catch { }
+        })();
     </script>
 </body>
 
