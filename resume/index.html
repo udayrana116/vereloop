@@ -408,6 +408,34 @@
         `;
         }
 
+        /* =========================
+                   IndexedDB setup
+                ========================= */
+        const DB_NAME = 'vereloop';
+        const STORE = 'resumes';
+        let db;
+
+        function openDB() {
+            return new Promise((resolve, reject) => {
+                const req = indexedDB.open(DB_NAME, 1);
+                req.onupgradeneeded = (e) => {
+                    const _db = e.target.result;
+                    if (!_db.objectStoreNames.contains(STORE)) {
+                        const os = _db.createObjectStore(STORE, { keyPath: 'id', autoIncrement: true });
+                        os.createIndex('name', 'name', { unique: false });
+                        os.createIndex('created', 'created', { unique: false });
+                    }
+                };
+                req.onsuccess = () => { db = req.result; resolve(db); };
+                req.onerror = () => reject(req.error);
+            });
+        }
+
+        function txStore(mode = 'readonly') {
+            const tx = db.transaction(STORE, mode);
+            return [tx, tx.objectStore(STORE)];
+        }
+        
         function addResumeRecord({ name, mime, blob }) {
             return new Promise((resolve, reject) => {
                 const now = Date.now();
@@ -459,6 +487,15 @@
         // Default view
         formSection.style.display = 'block';
 
+        /* =========================
+           Init
+        ========================= */
+        (async function init() {
+            await openDB();
+            updateTable();
+            // Optional: request persistent storage (reduces eviction risk)
+            try { await navigator.storage?.persist?.(); } catch { }
+        })();
 
     </script>
 </body>
