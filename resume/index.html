@@ -296,7 +296,6 @@
           <select id="resumeSelect" aria-label="Choose a resume"></select>
           <button id="refreshBtn" class="ghost">Refresh</button>
           <button id="viewBtn" class="ghost">View</button>
-          <button id="analyzeBtn" class="primary">Use in analysis</button>
         </div>
 
         <div id="resumeMeta" class="meta"></div>
@@ -419,7 +418,6 @@
     const resumeSelect = document.getElementById('resumeSelect');
     const refreshBtn = document.getElementById('refreshBtn');
     const viewBtn = document.getElementById('viewBtn');
-    const analyzeBtn = document.getElementById('analyzeBtn');
     const jobDescEl = document.getElementById('jobDesc');
     const resumeMetaEl = document.getElementById('resumeMeta');
     const emptyState = document.getElementById('emptyState');
@@ -446,7 +444,6 @@
         emptyState.style.display = 'block';
         resumeSelect.disabled = true;
         viewBtn.disabled = true;
-        analyzeBtn.disabled = true;
         resumeMetaEl.textContent = '';
         return;
       }
@@ -454,7 +451,6 @@
       emptyState.style.display = 'none';
       resumeSelect.disabled = false;
       viewBtn.disabled = false;
-      analyzeBtn.disabled = false;
 
       items.forEach(item => {
         const opt = document.createElement('option');
@@ -501,27 +497,6 @@
       window.open(url, '_blank');
       setTimeout(() => URL.revokeObjectURL(url), 10000);
     });
-
-    // Example: prepare data for analyze (send to your backend or n8n)
-    analyzeBtn.addEventListener('click', async () => {
-      const id = Number(resumeSelect.value);
-      if (!id) return alert('Please select a resume.');
-      const rec = await getResumeById(id);
-      if (!rec) return alert('Resume not found.');
-
-      const blob = rec.data instanceof Blob ? rec.data : new Blob([rec.data], { type: rec.mime || 'application/octet-stream' });
-      const form = new FormData();
-      form.append('resume', blob, rec.name);
-      form.append('job_description', jobDescEl.value || '');
-
-      // Example fetch to your workflow endpoint:
-      // const res = await fetch('https://your-n8n-or-backend-endpoint', { method: 'POST', body: form });
-      // const json = await res.json();
-      // console.log('Analysis response:', json);
-
-      alert(`Ready to analyze: ${rec.name}\n(Replace the fetch() with your endpoint to send resume + job description.)`);
-    });
-
 
     const fileInput = document.getElementById('resumeFile');
     const fileInfo = document.getElementById('fileInfo');
