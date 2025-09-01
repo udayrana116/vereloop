@@ -81,10 +81,10 @@
         <button id="respRefreshBtn">Refresh</button>
     </div>
 
-    <div class="row">
+    <!-- <div class="row">
         <button id="respSimulatePost" class="primary">Simulate POST → Save</button>
         <span id="status" class="muted"></span>
-    </div>
+    </div> -->
 
     <!-- AI Responses -->
 
@@ -225,7 +225,7 @@
         const respRenameBtn = document.getElementById('respRenameBtn');
         const respDeleteBtn = document.getElementById('respDeleteBtn');
         const respRefreshBtn = document.getElementById('respRefreshBtn');
-        const simulateBtn = document.getElementById('respSimulatePost');
+        // const simulateBtn = document.getElementById('respSimulatePost');
         const statusEl = document.getElementById('status');
 
         async function renderResponsesDropdown(selectedId = null) {
@@ -248,7 +248,36 @@
         respViewBtn.addEventListener('click', async () => {
             const id = Number(respSelect.value);
             if (!id) return alert('Choose a saved response.');
-            window.open(`/Test.html?id=${encodeURIComponent(id)}`, '_blank');
+            // Update the address bar (no reload) …
+            const url = new URL(location.href);
+            url.searchParams.set('id', id);
+            history.replaceState({}, '', url);
+
+            let rec = null;
+
+            if (id) {
+                rec = await getById(id);
+            } else {
+                // No id in URL → load latest
+                const rows = await getAll();
+                if (rows.length) {
+                    rows.sort((a, b) => (b.created || 0) - (a.created || 0));
+                    rec = rows[0];
+                    id = rec.id;
+                    history.replaceState({}, '', `?id=${encodeURIComponent(id)}`);
+                }
+            }
+
+            if (!rec) { out.textContent = 'No saved responses.'; return; }
+
+            title.textContent = `${rec.label || 'AI Response'} • ${new Date(rec.created).toLocaleString()}`;
+            const text = renderAnalysis(rec.data);
+            out.textContent = text;
+
+            // renderAnalysis(rec.data);
+
+            // …then re-render the page for this id
+            // await loadById(id); // call your function that reads from IDB and renders
         });
 
         respRenameBtn.addEventListener('click', async () => {
@@ -270,23 +299,23 @@
             await renderResponsesDropdown();
         });
 
-        simulateBtn.addEventListener('click', async () => {
-            statusEl.textContent = 'Submitting…';
-            try {
-                const json = {
-                    analysis: { overall_match: 'Strong Azure + Spark alignment' },
-                    match_percentage: Math.floor(Math.random() * 20) + 70,
-                    created_at: new Date().toISOString()
-                };
-                const newId = await responseDB.add(json);
-                await renderResponsesDropdown(newId);
-                statusEl.textContent = 'Saved ✔';
-                setTimeout(() => (statusEl.textContent = ''), 1500);
-            } catch (e) {
-                console.error(e);
-                statusEl.textContent = 'Failed to save: ' + e;
-            }
-        });
+        // simulateBtn.addEventListener('click', async () => {
+        //     statusEl.textContent = 'Submitting…';
+        //     try {
+        //         const json = {
+        //             analysis: { overall_match: 'Strong Azure + Spark alignment' },
+        //             match_percentage: Math.floor(Math.random() * 20) + 70,
+        //             created_at: new Date().toISOString()
+        //         };
+        //         const newId = await responseDB.add(json);
+        //         await renderResponsesDropdown(newId);
+        //         statusEl.textContent = 'Saved ✔';
+        //         setTimeout(() => (statusEl.textContent = ''), 1500);
+        //     } catch (e) {
+        //         console.error(e);
+        //         statusEl.textContent = 'Failed to save: ' + e;
+        //     }
+        // });
 
         // ---------- Init ----------
         (async () => {
@@ -367,7 +396,15 @@
             <p>${analysisData.rating_justification}</p>
 
             <h3 style="color: #1e3a8a;">📄 Tailored ATS-Optimized Resume</h3>
-            <pre style="background: #f9fafb; padding: 1rem; border-radius: 8px; overflow-x: auto; margin-bottom: 2rem; font-size: 0.95rem; line-height: 1.4;">${analysisData.tailored_ats_optimized_resume}</pre>
+            <pre style="
+  background:#f9fafb; padding:1rem; border-radius:8px; margin-bottom:2rem;
+  font-size:.95rem; line-height:1.4;
+  white-space: pre-wrap;        /* preserve newlines, wrap long lines   */
+  overflow-wrap: anywhere;      /* break long tokens/URLs when needed   */
+  word-wrap: break-word;        /* fallback for older browsers          */
+  overflow-x: hidden;           /* no horizontal scroll                 */
+  max-width: 100%;
+">${analysisData.tailored_ats_optimized_resume}</pre>
 
             <h3 style="color: #4b5563;">💡 Summary & Tips</h3>
             <p>${analysisData.summary_and_tips}</p>
