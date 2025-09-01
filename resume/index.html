@@ -780,23 +780,23 @@
             await renderResponsesDropdown();
         });
 
-        simulateBtn.addEventListener('click', async () => {
-            statusEl.textContent = 'Submitting…';
-            try {
-                const json = {
-                    analysis: { overall_match: 'Strong Azure + Spark alignment' },
-                    match_percentage: Math.floor(Math.random() * 20) + 70,
-                    created_at: new Date().toISOString()
-                };
-                const newId = await responseDB.add(json);
-                await renderResponsesDropdown(newId);
-                statusEl.textContent = 'Saved ✔';
-                setTimeout(() => (statusEl.textContent = ''), 1500);
-            } catch (e) {
-                console.error(e);
-                statusEl.textContent = 'Failed to save: ' + e;
-            }
-        });
+        // simulateBtn.addEventListener('click', async () => {
+        //     statusEl.textContent = 'Submitting…';
+        //     try {
+        //         const json = {
+        //             analysis: { overall_match: 'Strong Azure + Spark alignment' },
+        //             match_percentage: Math.floor(Math.random() * 20) + 70,
+        //             created_at: new Date().toISOString()
+        //         };
+        //         const newId = await responseDB.add(json);
+        //         await renderResponsesDropdown(newId);
+        //         statusEl.textContent = 'Saved ✔';
+        //         setTimeout(() => (statusEl.textContent = ''), 1500);
+        //     } catch (e) {
+        //         console.error(e);
+        //         statusEl.textContent = 'Failed to save: ' + e;
+        //     }
+        // });
 
         // ---------- Init ----------
         (async () => {
