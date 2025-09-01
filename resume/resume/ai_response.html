@@ -56,7 +56,7 @@
 </head>
 
 <body>
-    <div class="container" id="form-section"></div>
+    <div id="header-placeholder"></div>
     <header>
         <div id="title">AI Response</div>
         <div>
@@ -64,42 +64,41 @@
             <button class="btn" id="downloadBtn">Download JSON</button>
         </div>
 
-        
+
     </header>
 
     <!--AI Responses  -->
-        <h1>AI Responses</h1>
-        <p class="muted">Analyzed resume responses are stored locally (IndexedDB). Latest appears first, only 10 kept.
-        </p>
-        <div class="box" style="margin:.75rem 0 1rem">
-            <select id="respSelect" aria-label="Saved responses">
-                <option value="" selected disabled>-- Select a saved response --</option>
-            </select>
-            <button id="respViewBtn">View</button>
-            <button id="respRenameBtn">Rename</button>
-            <button id="respDeleteBtn" class="danger">Delete</button>
-            <button id="respRefreshBtn">Refresh</button>
-        </div>
+    <h1>AI Responses</h1>
+    <p class="muted">Analyzed resume responses are stored locally (IndexedDB). Latest appears first, only 10 kept.
+    </p>
+    <div class="box" style="margin:.75rem 0 1rem">
+        <select id="respSelect" aria-label="Saved responses">
+            <option value="" selected disabled>-- Select a saved response --</option>
+        </select>
+        <button id="respViewBtn">View</button>
+        <button id="respRenameBtn">Rename</button>
+        <button id="respDeleteBtn" class="danger">Delete</button>
+        <button id="respRefreshBtn">Refresh</button>
+    </div>
 
-        <div class="row">
-            <button id="respSimulatePost" class="primary">Simulate POST → Save</button>
-            <span id="status" class="muted"></span>
-        </div>
+    <div class="row">
+        <button id="respSimulatePost" class="primary">Simulate POST → Save</button>
+        <span id="status" class="muted"></span>
+    </div>
 
-        <!-- AI Responses -->
+    <!-- AI Responses -->
 
     <div class="container" id="analysis-section"
         style="font-family: 'Inter', sans-serif; max-width: 1000px; margin: auto; padding: 2rem; background: #ffffff; border-radius: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.05);">
     </div>
     <script type="module">
-
+        // Load header once (IDs must be unique; ensure only one #header-placeholder)
         fetch("/reusables/header.html")
             .then(res => res.text())
-            .then(html => {
-                document.getElementById("header-placeholder").innerHTML = html;
-            });
+            .then(html => { document.getElementById("header-placeholder").innerHTML = html; })
+            .catch(console.error);
 
-            // ---------- Utilities ----------
+        // ---------- Utilities ----------
         const formatBytes = (n) => {
             if (n == null) return '—';
             const u = ['B', 'KB', 'MB', 'GB']; let i = 0;
@@ -220,7 +219,7 @@
             return { open, add, all, get, updateLabel, remove };
         })();
 
-         // ---------- Responses UI ----------
+        // ---------- Responses UI ----------
         const respSelect = document.getElementById('respSelect');
         const respViewBtn = document.getElementById('respViewBtn');
         const respRenameBtn = document.getElementById('respRenameBtn');
