@@ -705,8 +705,8 @@
                 const result = await resp.json().catch(() => ({}));
 
                 // show UI again
-                loadingScreen.style.display = 'none';
-                formSection.style.display = 'block';
+                // loadingScreen.style.display = 'none';
+                // formSection.style.display = 'block';
 
                 // Save uploaded file to IndexedDB (don’t duplicate if it came from IDB)
                 if (chosen.source === 'upload') {
@@ -721,6 +721,8 @@
                 const json = result;
                 const newId = await responseDB.add(json);
                 await renderResponsesDropdown(newId);
+
+                window.open(`/resume/resume/ai_response.html?id=${encodeURIComponent(newId)}`, '_blank');
 
             } catch (err) {
                 loadingScreen.style.display = 'none';
