@@ -758,7 +758,7 @@
         respViewBtn.addEventListener('click', async () => {
             const id = Number(respSelect.value);
             if (!id) return alert('Choose a saved response.');
-            window.open(`/resume/ai_response.html?id=${encodeURIComponent(id)}`, '_blank');
+            window.open(`/resume/resume/ai_response.html?id=${encodeURIComponent(id)}`, '_blank');
         });
 
         respRenameBtn.addEventListener('click', async () => {
