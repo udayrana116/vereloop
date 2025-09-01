@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Response Viewer</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+            color: #030d1b;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background-color: #fff;
+            border-radius: 12px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.25rem;
+            background: #82858a;
+            border-bottom: 1px solid #ffffff
+        }
+
+        main {
+            padding: 1rem 1.25rem
+        }
+
+        pre {
+            background: #0f172a;
+            border: 1px solid #1e293b;
+            border-radius: 10px;
+            padding: 1rem;
+            overflow: auto
+        }
+
+        .btn {
+            padding: .5rem .75rem;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            background: #0b1220;
+            color: #fdfeff;
+            cursor: pointer
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container" id="form-section"></div>
+    <header>
+        <div id="title">AI Response</div>
+        <div>
+            <button class="btn" id="copyBtn">Copy JSON</button>
+            <button class="btn" id="downloadBtn">Download JSON</button>
+        </div>
+
+        
+    </header>
+
+    <!--AI Responses  -->
+        <h1>AI Responses</h1>
+        <p class="muted">Analyzed resume responses are stored locally (IndexedDB). Latest appears first, only 10 kept.
+        </p>
+        <div class="box" style="margin:.75rem 0 1rem">
+            <select id="respSelect" aria-label="Saved responses">
+                <option value="" selected disabled>-- Select a saved response --</option>
+            </select>
+            <button id="respViewBtn">View</button>
+            <button id="respRenameBtn">Rename</button>
+            <button id="respDeleteBtn" class="danger">Delete</button>
+            <button id="respRefreshBtn">Refresh</button>
+        </div>
+
+        <div class="row">
+            <button id="respSimulatePost" class="primary">Simulate POST → Save</button>
+            <span id="status" class="muted"></span>
+        </div>
+
+        <!-- AI Responses -->
+
+    <div class="container" id="analysis-section"
+        style="font-family: 'Inter', sans-serif; max-width: 1000px; margin: auto; padding: 2rem; background: #ffffff; border-radius: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.05);">
+    </div>
+    <script type="module">
+
+        fetch("/reusables/header.html")
+            .then(res => res.text())
+            .then(html => {
+                document.getElementById("header-placeholder").innerHTML = html;
+            });
+
+            // ---------- Utilities ----------
+        const formatBytes = (n) => {
+            if (n == null) return '—';
+            const u = ['B', 'KB', 'MB', 'GB']; let i = 0;
+            while (n >= 1024 && i < u.length - 1) { n /= 1024; i++; }
+            return `${(n < 10 && i > 0) ? n.toFixed(1) : Math.round(n)} ${u[i]}`;
+        };
+        const fmtDate = (d) => new Date(d).toLocaleString();
+
+        // ---------- Responses DB (AI_response/responses) ----------
+        const responseDB = (() => {
+            const DB_NAME = 'AI_response';
+            const STORE = 'responses';
+            let db;
+
+            function open() {
+                return new Promise((resolve, reject) => {
+                    if (db) return resolve(db);
+                    const req = indexedDB.open(DB_NAME, 1);
+                    req.onupgradeneeded = (e) => {
+                        const _db = e.target.result;
+                        if (!_db.objectStoreNames.contains(STORE)) {
+                            const os = _db.createObjectStore(STORE, { keyPath: 'id', autoIncrement: true });
+                            os.createIndex('created', 'created', { unique: false });
+                        }
+                    };
+                    req.onsuccess = () => { db = req.result; resolve(db); };
+                    req.onerror = () => reject(req.error);
+                });
+            }
+
+            function tx(mode = 'readonly') {
+                const t = db.transaction(STORE, mode);
+                return [t, t.objectStore(STORE)];
+            }
+
+            async function add(payload, label) {
+                await open();
+                return new Promise((resolve, reject) => {
+                    const now = Date.now();
+                    const [t, s] = tx('readwrite');
+                    const rec = {
+                        label: label || deriveTitle(payload) || 'AI Response',
+                        created: now,
+                        data: payload
+                    };
+                    const req = s.add(rec);
+                    req.onsuccess = async () => { await trimToMax(10); resolve(req.result); };
+                    req.onerror = () => reject(req.error);
+                });
+            }
+
+            async function all() {
+                await open();
+                return new Promise((resolve, reject) => {
+                    const [t, s] = tx('readonly');
+                    const r = s.getAll();
+                    r.onsuccess = () => resolve(r.result || []);
+                    r.onerror = () => reject(r.error);
+                });
+            }
+
+            async function get(id) {
+                await open();
+                return new Promise((resolve, reject) => {
+                    const [t, s] = tx('readonly');
+                    const r = s.get(id);
+                    r.onsuccess = () => resolve(r.result || null);
+                    r.onerror = () => reject(r.error);
+                });
+            }
+
+            async function updateLabel(id, newLabel) {
+                await open();
+                return new Promise((resolve, reject) => {
+                    const [t, s] = tx('readwrite');
+                    const getReq = s.get(id);
+                    getReq.onsuccess = () => {
+                        const rec = getReq.result;
+                        if (!rec) return reject(new Error('Not found'));
+                        rec.label = newLabel;
+                        const putReq = s.put(rec);
+                        putReq.onsuccess = () => resolve(true);
+                        putReq.onerror = () => reject(putReq.error);
+                    };
+                    getReq.onerror = () => reject(getReq.error);
+                });
+            }
+
+            async function remove(id) {
+                await open();
+                return new Promise((resolve, reject) => {
+                    const [t, s] = tx('readwrite');
+                    const req = s.delete(id);
+                    req.onsuccess = () => resolve(true);
+                    req.onerror = () => reject(req.error);
+                });
+            }
+
+            async function trimToMax(max) {
+                const items = await all();
+                if (items.length <= max) return true;
+                items.sort((a, b) => (a.created || 0) - (b.created || 0)); // oldest first
+                await open();
+                return new Promise((resolve) => {
+                    const [t, s] = tx('readwrite');
+                    const toDelete = items.length - max;
+                    for (let i = 0; i < toDelete; i++) s.delete(items[i].id);
+                    t.oncomplete = () => resolve(true);
+                });
+            }
+
+            function deriveTitle(json) {
+                if (json?.analysis?.overall_match) return json.analysis.overall_match.slice(0, 60);
+                if (json?.title) return json.title;
+                return `AI Response – ${new Date().toLocaleString()}`;
+            }
+
+            return { open, add, all, get, updateLabel, remove };
+        })();
+
+         // ---------- Responses UI ----------
+        const respSelect = document.getElementById('respSelect');
+        const respViewBtn = document.getElementById('respViewBtn');
+        const respRenameBtn = document.getElementById('respRenameBtn');
+        const respDeleteBtn = document.getElementById('respDeleteBtn');
+        const respRefreshBtn = document.getElementById('respRefreshBtn');
+        const simulateBtn = document.getElementById('respSimulatePost');
+        const statusEl = document.getElementById('status');
+
+        async function renderResponsesDropdown(selectedId = null) {
+            await responseDB.open();
+            const rows = await responseDB.all();
+            rows.sort((a, b) => (b.created || 0) - (a.created || 0));
+            respSelect.innerHTML = '<option value="" selected disabled>-- Select a saved response --</option>';
+            for (const r of rows) {
+                const opt = document.createElement('option');
+                opt.value = String(r.id);
+                opt.textContent = `${r.label} • ${new Date(r.created).toLocaleString()}`;
+                respSelect.appendChild(opt);
+            }
+            if (selectedId) {
+                const found = [...respSelect.options].find(o => Number(o.value) === selectedId);
+                if (found) found.selected = true;
+            }
+        }
+
+        respViewBtn.addEventListener('click', async () => {
+            const id = Number(respSelect.value);
+            if (!id) return alert('Choose a saved response.');
+            window.open(`/Test.html?id=${encodeURIComponent(id)}`, '_blank');
+        });
+
+        respRenameBtn.addEventListener('click', async () => {
+            const id = Number(respSelect.value);
+            if (!id) return alert('Select a response to rename.');
+            const currentOpt = respSelect.options[respSelect.selectedIndex]?.textContent || '';
+            const currentLabel = currentOpt.split(' • ')[0];
+            const newLabel = prompt('New label:', currentLabel);
+            if (!newLabel?.trim()) return;
+            await responseDB.updateLabel(id, newLabel.trim());
+            await renderResponsesDropdown(id);
+        });
+
+        respDeleteBtn.addEventListener('click', async () => {
+            const id = Number(respSelect.value);
+            if (!id) return alert('Select a response to delete.');
+            if (!confirm('Delete this saved response? This cannot be undone.')) return;
+            await responseDB.remove(id);
+            await renderResponsesDropdown();
+        });
+
+        simulateBtn.addEventListener('click', async () => {
+            statusEl.textContent = 'Submitting…';
+            try {
+                const json = {
+                    analysis: { overall_match: 'Strong Azure + Spark alignment' },
+                    match_percentage: Math.floor(Math.random() * 20) + 70,
+                    created_at: new Date().toISOString()
+                };
+                const newId = await responseDB.add(json);
+                await renderResponsesDropdown(newId);
+                statusEl.textContent = 'Saved ✔';
+                setTimeout(() => (statusEl.textContent = ''), 1500);
+            } catch (e) {
+                console.error(e);
+                statusEl.textContent = 'Failed to save: ' + e;
+            }
+        });
+
+        // ---------- Init ----------
+        (async () => {
+            await responseDB.open();
+            await renderResponsesDropdown();
+        })();
+
+
+        const DB_NAME = 'AI_response', STORE = 'responses';
+        let db;
+
+        function openDB() {
+            return new Promise((resolve, reject) => {
+                const req = indexedDB.open(DB_NAME, 1);
+                req.onupgradeneeded = (e) => {
+                    const _db = e.target.result;
+                    if (!_db.objectStoreNames.contains(STORE)) {
+                        _db.createObjectStore(STORE, { keyPath: 'id', autoIncrement: true });
+                    }
+                };
+                req.onsuccess = () => { db = req.result; resolve(db); };
+                req.onerror = () => reject(req.error);
+            });
+        }
+
+        function getById(id) {
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(STORE, 'readonly');
+                const store = tx.objectStore(STORE);
+                const r = store.get(id);
+                r.onsuccess = () => resolve(r.result || null);
+                r.onerror = () => reject(r.error);
+            });
+        }
+
+        function getAll() {
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(STORE, 'readonly');
+                const store = tx.objectStore(STORE);
+                const r = store.getAll();
+                r.onsuccess = () => resolve(r.result || []);
+                r.onerror = () => reject(r.error);
+            });
+        }
+
+        function getParam(name) {
+            const url = new URL(window.location.href);
+            return url.searchParams.get(name);
+        }
+
+        const out = document.getElementById('jsonOut');
+        const title = document.getElementById('title');
+        const copyBtn = document.getElementById('copyBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+
+        const analysisSection = document.getElementById('analysis-section');
+
+        function renderAnalysis(analysisData) {
+            function createList(items) {
+                return '<ul style="padding-left: 1.25rem;">' + items.map(i => `<li>${i}</li>`).join('') + '</ul>';
+            }
+
+            const container = document.getElementById("analysis-section");
+            container.innerHTML = `
+            <h2 style="color: #7c3aed;">🔍 Overall Match Summary</h2>
+            <p>${analysisData.overall_match}</p>
+
+            <h3 style="color: #4c1d95;">✅ Skills & Experience Found in Both</h3>
+            ${createList(analysisData.key_skills_exp_phrases_found_in_both)}
+
+            <h3 style="color: #b91c1c;">❌ Missing but Important for Job</h3>
+            ${createList(analysisData.key_skills_exp_phrases_missing_from_resume_but_important_in_job)}
+
+            <h3 style="color: #0f766e;">📊 Match Score: <span style="font-size: 1.5rem; font-weight: 600;">${analysisData.match_percentage}%</span></h3>
+            <p>${analysisData.match_percentage_explanation}</p>
+
+            <h3 style="color: #3b0764;">⭐ Rating: ${analysisData.rating}/5</h3>
+            <p>${analysisData.rating_justification}</p>
+
+            <h3 style="color: #1e3a8a;">📄 Tailored ATS-Optimized Resume</h3>
+            <pre style="background: #f9fafb; padding: 1rem; border-radius: 8px; overflow-x: auto; margin-bottom: 2rem; font-size: 0.95rem; line-height: 1.4;">${analysisData.tailored_ats_optimized_resume}</pre>
+
+            <h3 style="color: #4b5563;">💡 Summary & Tips</h3>
+            <p>${analysisData.summary_and_tips}</p>
+
+            <h3 style="color: #ca8a04;">🛠️ Optional Suggestions</h3>
+            ${createList(analysisData.optional_suggestions)}
+        `;
+        }
+
+        (async function init() {
+            await openDB();
+
+            let id = Number(getParam('id'));
+            let rec = null;
+
+            if (id) {
+                rec = await getById(id);
+            } else {
+                // No id in URL → load latest
+                const rows = await getAll();
+                if (rows.length) {
+                    rows.sort((a, b) => (b.created || 0) - (a.created || 0));
+                    rec = rows[0];
+                    id = rec.id;
+                    history.replaceState({}, '', `?id=${encodeURIComponent(id)}`);
+                }
+            }
+
+            if (!rec) { out.textContent = 'No saved responses.'; return; }
+
+            title.textContent = `${rec.label || 'AI Response'} • ${new Date(rec.created).toLocaleString()}`;
+            const text = renderAnalysis(rec.data);
+            out.textContent = text;
+
+            // renderAnalysis(rec.data);
+
+            copyBtn.onclick = async () => {
+                try { await navigator.clipboard.writeText(text); copyBtn.textContent = 'Copied!'; setTimeout(() => copyBtn.textContent = 'Copy JSON', 1200); } catch { }
+            };
+            downloadBtn.onclick = () => {
+                const blob = new Blob([text], { type: 'application/json' });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = `ai-response-${id}.json`;
+                document.body.appendChild(a); a.click(); a.remove();
+                setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+            };
+        })();
+    </script>
+</body>
+
+</html>
