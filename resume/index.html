@@ -704,10 +704,6 @@
                 const resp = await fetch('https://n8n.srv968815.hstgr.cloud/webhook/dea597e9-2b33-4067-a662-3087c45a956d', { method: 'POST', body: formData });
                 const result = await resp.json().catch(() => ({}));
 
-                // show UI again
-                // loadingScreen.style.display = 'none';
-                // formSection.style.display = 'block';
-
                 // Save uploaded file to IndexedDB (don’t duplicate if it came from IDB)
                 if (chosen.source === 'upload') {
                     await resumeDB.add({ name: chosen.name, mime: chosen.blob.type || 'application/octet-stream', blob: chosen.blob });
@@ -723,6 +719,10 @@
                 await renderResponsesDropdown(newId);
 
                 window.open(`/resume/resume/ai_response.html?id=${encodeURIComponent(newId)}`, '_blank');
+
+                // show UI again
+                loadingScreen.style.display = 'none';
+                formSection.style.display = 'block';
 
             } catch (err) {
                 loadingScreen.style.display = 'none';
