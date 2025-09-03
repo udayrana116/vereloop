@@ -10,6 +10,8 @@
             font-family: 'Segoe UI', sans-serif;
             margin: 0;
             padding: 0;
+            margin-right: 380px;
+            /* match the panel width */
             background-color: #f9f9f9;
             color: #030d1b;
         }
@@ -52,6 +54,26 @@
             color: #fdfeff;
             cursor: pointer
         }
+
+        /* #n8n-chat {
+            width: 380px;
+            height: 90%;
+        } */
+
+        .chat-panel {
+            position: fixed;
+            top: 5%;
+            bottom: 10%;
+            right: 0;
+            width: 380px;
+            /* adjust as needed */
+            height: 90%;
+            background: #fff;
+            /* chat background inherits from n8n styles */
+            border-left: 1px solid #e2e8f0;
+            z-index: 9999;
+            /* on top of other content */
+        }
     </style>
 </head>
 
@@ -91,6 +113,9 @@
     <div class="container" id="analysis-section"
         style="font-family: 'Inter', sans-serif; max-width: 1000px; margin: auto; padding: 2rem; background: #ffffff; border-radius: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.05);">
     </div>
+
+    <!-- Chat container -->
+    <div id="n8n-chat" class="chat-panel"></div>
     <script type="module">
         // Load header once (IDs must be unique; ensure only one #header-placeholder)
         fetch("/reusables/header.html")
@@ -400,7 +425,7 @@
   background:#f9fafb; padding:1rem; border-radius:8px; margin-bottom:2rem;
   font-size:.95rem; line-height:1.4;
   white-space: pre-wrap;        /* preserve newlines, wrap long lines   */
-  overflow-wrap: anywhere;      /* break long tokens/URLs when needed   */
+  overflow-wrap: anywhere;
   word-wrap: break-word;        /* fallback for older browsers          */
   overflow-x: hidden;           /* no horizontal scroll                 */
   max-width: 100%;
@@ -437,7 +462,7 @@
 
             title.textContent = `${rec.label || 'AI Response'} • ${new Date(rec.created).toLocaleString()}`;
             const text = renderAnalysis(rec.data);
-            out.textContent = text;
+            // out.textContent = text;
 
             // renderAnalysis(rec.data);
 
@@ -453,6 +478,98 @@
                 setTimeout(() => URL.revokeObjectURL(a.href), 5000);
             };
         })();
+
+        const N8N_CHAT_WEBHOOK = 'https://n8n.srv968815.hstgr.cloud/webhook/4450ff2e-9167-455d-b7e9-92ad7a398c13/chat'; // <-- change me
+
+
+        import { createChat } from 'https://cdn.jsdelivr.net/npm/@n8n/chat/dist/chat.bundle.es.js';
+
+        async function syncCurrentFromURL() {
+            await openDB();
+            let id = Number(getParam('id'));
+            let rec = null;
+
+            if (id) {
+                rec = await getById(id);
+            } else {
+                // No id in URL → load latest
+                const rows = await getAll();
+                if (rows.length) {
+                    rows.sort((a, b) => (b.created || 0) - (a.created || 0));
+                    rec = rows[0];
+                    id = rec.id;
+                    history.replaceState({}, '', `?id=${encodeURIComponent(id)}`);
+                }
+            }
+            return rec
+        }
+
+        const datasummary = await syncCurrentFromURL();
+        console.log(datasummary)
+
+        /* ======================== Text utilities ======================== */
+        const safeParse = (t) => { try { return JSON.parse(t); } catch { return null; } };
+        const asArray = (v) => {
+            if (Array.isArray(v)) return v;
+            if (v == null) return [];
+            if (typeof v === 'string') return v.split(/\n|,|;|\u2022/).map(s => s.trim()).filter(Boolean);
+            return [String(v)];
+        };
+        function toTextFromResponse(rec) {
+            const data = typeof rec.data === 'string' ? safeParse(rec.data) : rec.data;
+            const a = data?.analysis ?? data ?? {};
+            const lines = [];
+            if (a.overall_match) lines.push('OVERALL: ' + a.overall_match);
+            if (a.match_percentage != null) lines.push(`MATCH: ${a.match_percentage}%`);
+            if (a.key_skills_exp_phrases_found_in_both)
+                lines.push('FOUND: ' + asArray(a.key_skills_exp_phrases_found_in_both).join(', '));
+            if (a.key_skills_exp_phrases_missing_from_resume_but_important_in_job)
+                lines.push('MISSING: ' + asArray(a.key_skills_exp_phrases_missing_from_resume_but_important_in_job).join(', '));
+            if (a.tailored_ats_optimized_resume)
+                lines.push('TAILORED_RESUME:\n' + a.tailored_ats_optimized_resume);
+            if (a.summary_and_tips) lines.push('TIPS: ' + a.summary_and_tips);
+            return lines.join('\n');
+        }
+
+        // Build your context from the page state (current analysis on screen)
+        function currentAnalysisContext() {
+            // Example: read from ?id=… and from your page variables
+            const url = new URL(location.href);
+            const id = Number(url.searchParams.get('id'));
+            const label = datasummary.label || 'AI Response';
+            // Optionally add short “top chunks” or a summary string (keep it small)
+            // const summary = await syncCurrentFromURL();
+            let summary = toTextFromResponse(datasummary);
+            console.log({ app: 'vereloop', responseId: id, responseLabel: label, summary })
+            return { app: 'vereloop', responseId: id, responseLabel: label, summary };
+        }
+
+        // Initialize the chat with metadata (goes to n8n on every message)
+        let chatWidget = createChat({
+            webhookUrl: N8N_CHAT_WEBHOOK,
+            target: '#n8n-chat',
+            mode: 'fullscreen',
+            loadPreviousSession: true,
+            metadata: currentAnalysisContext(),   // <-- your context
+            initialMessages: ['Ask me about this analysis.'],
+        });
+
+        // If the selected analysis changes on the page, reinitialize with fresh metadata
+        function updateChatContext() {
+            // Easiest way: re-create the widget (clear the container first)
+            document.querySelector('#n8n-chat').innerHTML = '';
+            chatWidget = createChat({
+                webhookUrl: N8N_CHAT_WEBHOOK,
+                target: '#n8n-chat',
+                mode: 'window',
+                loadPreviousSession: true,
+                metadata: currentAnalysisContext(),
+            });
+        }
+
+        // Call updateChatContext() whenever you switch to another saved response
+        // e.g., after your viewer navigates to a new ?id=...
+        window.addEventListener('locationchange', updateChatContext);
     </script>
 </body>
 
