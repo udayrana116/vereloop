@@ -439,6 +439,7 @@
         <p style="margin-top: 20px; font-size: 1.2rem; color: #7c3aed;">Analyzing your resume with AI magic...</p>
     </div>
 
+    <script src="https://unpkg.com/mammoth/mammoth.browser.min.js"></script>
     <script type="module">
         // Load header once (IDs must be unique; ensure only one #header-placeholder)
         fetch("/reusables/header.html")
@@ -652,16 +653,46 @@
                 opt.textContent = r.name;
                 resumeSelect.appendChild(opt);
             }
+            console.log(resumeSelect)
         }
 
-        resumeFileInput.addEventListener('change', () => {
-            const f = resumeFileInput.files[0];
+        async function docxToText(file) {
+            const arrayBuffer = await file.arrayBuffer();
+            // Convert to HTML then strip tags to get plain text
+            const { value: html } = await window.mammoth.convertToHtml({ arrayBuffer });
+            const div = document.createElement('div'); div.innerHTML = html;
+            return div.textContent.replace(/\s+\n/g, '\n').trim();
+        }
+
+        resumeFileInput.addEventListener('change', async () => {
+            const f = resumeFileInput.files?.[0];
             if (f) {
                 fileMeta.textContent = `Selected: ${f.name} • ${formatBytes(f.size)} • ${f.type || 'unknown'}`;
                 if (choiceHint) choiceHint.textContent = 'This uploaded file will be used for analysis.';
             } else {
                 fileMeta.textContent = '';
                 if (choiceHint) choiceHint.textContent = 'Tip: If you select a file, it takes priority over the dropdown.';
+                return;
+            }
+
+            console.log({ file: f, mime: f.type });
+
+            // some browsers don’t set type; also allow by extension
+            const isDocx = f.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                || /\.docx$/i.test(f.name);
+
+            if (!isDocx) {
+                console.warn('Not a DOCX file; skipping Mammoth.');
+                return;
+            }
+
+            try {
+                const text = await docxToText(f);
+                // console.log('Extracted text:', text);
+                // e.g., show it on the page:
+                // document.getElementById('preview').textContent = text;
+            } catch (err) {
+                console.error('DOCX parse failed:', err);
             }
         });
 
@@ -687,15 +718,22 @@
             if (!rec) return null;
             const blob = rec.data instanceof Blob ? rec.data : new Blob([rec.data], { type: rec.mime || 'application/octet-stream' });
             return { name: rec.name, blob, source: 'indexeddb', id };
+            console.log('a' + rec)
         }
 
         analyzeBtn.addEventListener('click', async () => {
             const chosen = await getChosenResume();
             if (!chosen) { alert('Please upload a resume or choose one from the list.'); return; }
 
+            console.log(chosen.blob.type)
+
+            const restext = await docxToText(chosen.blob);
+            console.log('Extracted text:', restext);
+
             const formData = new FormData();
             formData.append('Upload Resume', chosen.blob);
             formData.append('Upload the Job description', document.getElementById('jobDescription').value.trim());
+            formData.append('Resume2', restext);
 
             formSection.style.display = 'none';
             loadingScreen.style.display = 'block';
@@ -718,7 +756,9 @@
                 const newId = await responseDB.add(json);
                 await renderResponsesDropdown(newId);
 
-                window.open(`/resume/resume/ai_response.html?id=${encodeURIComponent(newId)}`, '_blank');
+                // window.open(`/resume/resume/ai_response.html?id=${encodeURIComponent(newId)}`, '_blank');
+
+                window.location.href = "/resume/resume/ai_response.html?id=${encodeURIComponent(newId)}";
 
                 // show UI again
                 loadingScreen.style.display = 'none';
