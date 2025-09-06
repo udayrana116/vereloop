@@ -61,28 +61,35 @@
             height: 90%;
         } */
 
-
         .chat-panel {
             position: fixed;
+            top: 5%;
+            bottom: 10%;
+            right: 0;
+            width: 40%;
+            /* adjust as needed */
+            height: 90%;
             background: #fff;
-            /* or match your site theme */
+            /* chat background inherits from n8n styles */
+            border-left: 1px solid #e2e8f0;
             z-index: 9999;
-            border: 1px solid #e5e7eb;
+            /* on top of other content */
         }
 
         /* Default (desktop) → right side */
         @media (min-width: 768px) {
             .chat-panel {
-                top: 0;
+                top: 5%;
+                bottom: 10%;
                 right: 0;
-                width: 380px;
+                width: 40%;
                 /* adjust as needed */
-                height: 100%;
+                height: 90%;
                 border-left: 1px solid #e5e7eb;
             }
 
             body {
-                margin-right: 380px;
+                margin-right: 40%;
             }
 
             /* keep main content visible */
