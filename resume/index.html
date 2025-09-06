@@ -725,7 +725,7 @@
             const chosen = await getChosenResume();
             if (!chosen) { alert('Please upload a resume or choose one from the list.'); return; }
 
-            console.log(chosen.blob.type)
+            // console.log(chosen.blob.type)
 
             const restext = await docxToText(chosen.blob);
             console.log('Extracted text:', restext);
