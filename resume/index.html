@@ -674,26 +674,6 @@
                 if (choiceHint) choiceHint.textContent = 'Tip: If you select a file, it takes priority over the dropdown.';
                 return;
             }
-
-            console.log({ file: f, mime: f.type });
-
-            // some browsers don’t set type; also allow by extension
-            const isDocx = f.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-                || /\.docx$/i.test(f.name);
-
-            if (!isDocx) {
-                console.warn('Not a DOCX file; skipping Mammoth.');
-                return;
-            }
-
-            try {
-                const text = await docxToText(f);
-                // console.log('Extracted text:', text);
-                // e.g., show it on the page:
-                // document.getElementById('preview').textContent = text;
-            } catch (err) {
-                console.error('DOCX parse failed:', err);
-            }
         });
 
         resumeRefreshBtn.addEventListener('click', populateResumeDropdown);
@@ -725,11 +705,13 @@
             const chosen = await getChosenResume();
             if (!chosen) { alert('Please upload a resume or choose one from the list.'); return; }
 
-            // console.log(chosen.blob.type)
-
-            const restext = await docxToText(chosen.blob);
-            console.log('Extracted text:', restext);
-
+            console.log('chosen.blob.type ', chosen.blob.type);
+            let restext = "";
+            if (chosen.blob.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+                let restext = await docxToText(chosen.blob);
+                // console.log('Extracted text:', restext);
+            }
+            
             const formData = new FormData();
             formData.append('Upload Resume', chosen.blob);
             formData.append('Upload the Job description', document.getElementById('jobDescription').value.trim());
