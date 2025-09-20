@@ -3,7 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <title>Vereloop Options</title>
-  <style> body { font-family: system-ui; padding: 16px; } </style>
+  <style>body{font-family:system-ui;padding:16px}</style>
+  <script src="content.js" defer></script> <!-- now uses content.js -->
 </head>
 <body>
   <h1>Vereloop Autofill — Options</h1>
@@ -12,18 +13,6 @@
     <input id="fullName" />
   </label>
   <button id="save">Save</button>
-
-  <script>
-    // load
-    chrome.storage.local.get(["fullName"], ({ fullName }) => {
-      document.getElementById("fullName").value = fullName || "";
-    });
-    // save
-    document.getElementById("save").addEventListener("click", async () => {
-      const fullName = document.getElementById("fullName").value.trim();
-      await chrome.storage.local.set({ fullName });
-      alert("Saved");
-    });
-  </script>
+  <div id="status"></div>
 </body>
 </html>
