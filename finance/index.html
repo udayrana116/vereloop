@@ -1,69 +1,494 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Coming Soon – Vereloop</title>
-  <link rel="icon" href="/favicon.ico" type="image/x-icon" />
-  <style>
-    body {
-      margin: 0;
-      padding: 0;
-      background-color: #f9fafb;
-      font-family: 'Segoe UI', sans-serif;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      text-align: center;
-      flex-direction: column;
-      color: #1f2937;
-    }
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Analyze Your Bank Statements — Instantly</title>
+    <meta name="description"
+        content="Upload your bank statement (CSV, PDF, Excel) and get financial insights in seconds with secure, privacy-first processing.">
 
-    .construction {
-      width: 180px;
-      animation: float 2.5s ease-in-out infinite;
-      margin-bottom: 2rem;
-    }
+    <style>
+        :root {
+            --bg: #f6f9fc;
+            --panel: #ffffff;
+            --ink: #0f1b2a;
+            --muted: #6b7a90;
+            --brand: #2f7dff;
+            --brand-2: #22c55e;
+            --border: #e5e9f2;
+            --shadow: 0 6px 22px rgba(16, 24, 40, .08);
+            --radius: 14px;
+        }
 
-    @keyframes float {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-15px); }
-    }
+        * {
+            box-sizing: border-box
+        }
 
-    h1 {
-      font-size: 2rem;
-      margin-bottom: 0.5rem;
-    }
+        body {
+            margin: 0;
+            font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Inter, Arial, Helvetica, sans-serif;
+            color: var(--ink);
+            background: var(--bg);
+            line-height: 1.5;
+        }
 
-    p {
-      font-size: 1.1rem;
-      color: #4b5563;
-      margin-bottom: 2rem;
-    }
+        /* Header / hero */
+        .wrap {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 28px 20px 80px
+        }
 
-    a {
-      padding: 0.7rem 1.5rem;
-      background-color: #4f46e5;
-      color: #fff;
-      text-decoration: none;
-      border-radius: 6px;
-      font-weight: 500;
-    }
+        .hero {
+            text-align: center;
+            padding: 32px 0 22px;
+        }
 
-    a:hover {
-      background-color: #4338ca;
-    }
-  </style>
+        .hero h1 {
+            margin: 0 0 8px;
+            font-size: clamp(28px, 4.5vw, 48px);
+            letter-spacing: .2px;
+            font-weight: 800;
+        }
+
+        .hero h1 .accent {
+            color: var(--brand-2);
+            text-decoration: underline;
+            text-underline-offset: 6px;
+        }
+
+        .hero p {
+            margin: 0 auto 18px;
+            color: var(--muted);
+            max-width: 760px;
+            font-size: clamp(15px, 2.2vw, 18px);
+        }
+
+        .pills {
+            display: flex;
+            gap: 14px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            background: #fff;
+            color: #3b4a63;
+            font-size: 14px;
+        }
+
+        .pill svg {
+            width: 16px;
+            height: 16px;
+            color: var(--brand)
+        }
+
+        /* Grid cards */
+        .grid {
+            display: grid;
+            gap: 24px;
+            grid-template-columns: repeat(12, 1fr);
+            margin-top: 24px;
+        }
+
+        .card {
+            grid-column: span 6;
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 18px;
+        }
+
+        .card h3 {
+            margin: 4px 0 14px;
+            font-size: 18px
+        }
+
+        .subtle {
+            color: var(--muted);
+            font-size: 14px
+        }
+
+        /* Uploader */
+        .drop {
+            margin-top: 10px;
+            border: 2px dashed #d9e1ef;
+            border-radius: 12px;
+            padding: 26px;
+            background: #fbfdff;
+            text-align: center;
+            transition: .15s ease;
+        }
+
+        .drop.dragover {
+            border-color: var(--brand);
+            background: #f0f7ff;
+        }
+
+        .cloud {
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            background: #eaf2ff;
+            display: grid;
+            place-items: center;
+            margin: 4px auto 12px;
+            color: var(--brand);
+        }
+
+        .drop p {
+            margin: 2px 0
+        }
+
+        .browse {
+            color: var(--brand);
+            text-decoration: none;
+            font-weight: 600
+        }
+
+        .mini {
+            font-size: 12px;
+            color: #8a97ad;
+            margin-top: 8px
+        }
+
+        /* File format list */
+        .format {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 6px;
+        }
+
+        .radio {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: #fcfdff;
+        }
+
+        .radio input {
+            accent-color: var(--brand)
+        }
+
+        .hint {
+            font-size: 12px;
+            color: #7b889d;
+            margin-top: 6px;
+            background: #f3f7ff;
+            border: 1px dashed #d8e4ff;
+            padding: 8px;
+            border-radius: 10px
+        }
+
+        /* CTA row */
+        .cta {
+            display: flex;
+            justify-content: center;
+            margin: 28px 0 8px;
+        }
+
+        .btn {
+            appearance: none;
+            border: 0;
+            border-radius: 12px;
+            padding: 12px 18px;
+            background: linear-gradient(90deg, var(--brand), #5ea5ff);
+            color: #fff;
+            font-weight: 700;
+            letter-spacing: .2px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 10px 18px rgba(47, 125, 255, .25);
+        }
+
+        .btn:disabled {
+            opacity: .6;
+            cursor: not-allowed;
+            box-shadow: none
+        }
+
+        .spinner {
+            width: 16px;
+            height: 16px;
+            border: 3px solid rgba(255, 255, 255, .6);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg)
+            }
+        }
+
+        /* Features */
+        .features {
+            display: grid;
+            gap: 18px;
+            grid-template-columns: repeat(3, 1fr);
+            margin: 40px 0 10px
+        }
+
+        .feature {
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            box-shadow: var(--shadow);
+            padding: 18px;
+            text-align: center;
+        }
+
+        .badge {
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            background: #eef4ff;
+            color: var(--brand);
+            display: grid;
+            place-items: center;
+            margin: 0 auto 8px;
+        }
+
+        .feature p {
+            color: var(--muted);
+            font-size: 14px;
+            margin: 6px auto 0;
+            max-width: 320px
+        }
+
+        /* Responsive */
+        @media (max-width: 960px) {
+            .card {
+                grid-column: span 12
+            }
+
+            .features {
+                grid-template-columns: 1fr
+            }
+        }
+    </style>
 </head>
+
 <body>
+    <div id="header-placeholder"></div>
 
-  <img src="https://cdn-icons-png.flaticon.com/512/2049/2049193.png" alt="Construction Icon" class="construction" />
 
-  <h1>We're still working on this!</h1>
-  <p>This page is under construction. Our team is hard at work bringing you something awesome for Time and Finance management.</p>
-  <a href="/index.html">← Back to Home</a>
+    <div class="wrap">
 
+        <!-- Hero -->
+        <section class="hero">
+            <h1>Analyze Your Bank Statements <span class="accent">Instantly</span></h1>
+            <p>Upload your bank statement and get detailed financial insights in seconds.
+                Support for CSV, PDF, and Excel formats with secure processing.</p>
+            <div class="pills">
+                <span class="pill">
+                    <!-- shield -->
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path d="M12 3l7 4v5c0 5-3.5 9-7 9s-7-4-7-9V7l7-4z" stroke-width="1.8" />
+                    </svg>
+                    Bank-level security
+                </span>
+                <span class="pill">
+                    <!-- bolt -->
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path d="M13 3L4 14h7l-1 7 9-11h-7l1-7z" stroke-width="1.8" />
+                    </svg>
+                    Instant processing
+                </span>
+                <span class="pill">
+                    <!-- chart -->
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path d="M3 21h18M7 17V9M12 17V5M17 17v-7" stroke-width="1.8" />
+                    </svg>
+                    Detailed analytics
+                </span>
+            </div>
+        </section>
+
+        <!-- Cards -->
+        <section class="grid" aria-label="Upload and options">
+            <!-- Upload card -->
+            <div class="card" id="uploadCard">
+                <h3>Upload Bank Statement</h3>
+                <div class="drop" id="dropArea">
+                    <div class="cloud">
+                        <!-- upload icon -->
+                        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor">
+                            <path d="M12 16V4m0 0l-4 4m4-4l4 4" stroke-width="1.8" stroke-linecap="round"
+                                stroke-linejoin="round" />
+                            <path d="M20 16.5a4.5 4.5 0 0 0-3.5-4.4 6 6 0 1 0-11 .9A4 4 0 0 0 4 16.5h16z"
+                                stroke-width="1.6" stroke-linecap="round" />
+                        </svg>
+                    </div>
+                    <p><strong>Drag & drop your bank statement</strong></p>
+                    <p class="subtle">or <a href="#" class="browse" id="browseLink">click to browse</a></p>
+                    <input type="file" id="fileInput" hidden accept=".csv,.xls,.xlsx,.pdf" />
+                    <p class="mini">Supports CSV, PDF, XLS, XLSX. File up to 10MB</p>
+                    <p class="mini" id="fileName" style="display:none;"></p>
+                </div>
+
+                <div class="subtle" style="display:flex;gap:8px;align-items:flex-start;margin-top:12px;">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
+                        style="color:#16a34a;margin-top:2px;">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke-width="1.6" />
+                    </svg>
+                    <span><strong>Secure Processing</strong><br>Your financial data is processed securely and never
+                        stored permanently. Files are automatically deleted after processing.</span>
+                </div>
+            </div>
+
+            <!-- File format card -->
+            <div class="card">
+                <h3>File Format <span class="subtle" title="Help">ⓘ</span></h3>
+                <div class="format" role="radiogroup" aria-label="File format">
+                    <label class="radio">
+                        <input type="radio" name="format" value="csv" checked />
+                        <div>
+                            <div><strong>CSV/Excel Format</strong></div>
+                            <div class="subtle">Pre-formatted table data ready for processing</div>
+                        </div>
+                    </label>
+
+                    <label class="radio">
+                        <input type="radio" name="format" value="pdf" />
+                        <div>
+                            <div><strong>PDF Format</strong></div>
+                            <div class="subtle">Bank statement PDF that needs text extraction and parsing</div>
+                        </div>
+                    </label>
+                </div>
+
+                <div class="hint">
+                    <strong>Tip:</strong> CSV files are processed faster, while PDFs may require additional parsing time
+                    for text extraction.
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA -->
+        <div class="cta">
+            <button id="analyzeBtn" class="btn" disabled>
+                <span>Analyze Statement</span>
+                <span id="ctaSpinner" class="spinner" style="display:none;"></span>
+            </button>
+        </div>
+
+        <!-- Why choose -->
+        <section style="text-align:center;margin-top:26px">
+            <h2 style="margin:0 0 8px">Why Choose Our Platform?</h2>
+            <p class="subtle" style="max-width:760px;margin:0 auto 18px">
+                Built for financial professionals and individuals who need reliable, secure bank statement analysis.
+            </p>
+
+            <div class="features">
+                <div class="feature">
+                    <div class="badge">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke-width="1.7" />
+                        </svg>
+                    </div>
+                    <h4 style="margin:6px 0 4px">Secure Processing</h4>
+                    <p>Your data is encrypted and processed securely. Files are automatically deleted after analysis.
+                    </p>
+                </div>
+                <div class="feature">
+                    <div class="badge">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor">
+                            <path d="M13 3L4 14h7l-1 7 9-11h-7l1-7z" stroke-width="1.7" />
+                        </svg>
+                    </div>
+                    <h4 style="margin:6px 0 4px">Lightning Fast</h4>
+                    <p>Get results in seconds, not minutes. Our optimized processing handles large files efficiently.
+                    </p>
+                </div>
+                <div class="feature">
+                    <div class="badge">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor">
+                            <path d="M3 21h18M7 17V9M12 17V5M17 17v-7" stroke-width="1.7" />
+                        </svg>
+                    </div>
+                    <h4 style="margin:6px 0 4px">Detailed Insights</h4>
+                    <p>Comprehensive analysis with transaction categorization, spending patterns, and financial metrics.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <script>
+        // Load header once (IDs must be unique; ensure only one #header-placeholder)
+        fetch("/reusables/header.html")
+            .then(res => res.text())
+            .then(html => { document.getElementById("header-placeholder").innerHTML = html; })
+            .catch(console.error);
+
+
+        // Elements
+        const dropArea = document.getElementById('dropArea');
+        const fileInput = document.getElementById('fileInput');
+        const browseLink = document.getElementById('browseLink');
+        const fileName = document.getElementById('fileName');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const ctaSpinner = document.getElementById('ctaSpinner');
+
+        // Enable choose via link
+        browseLink.addEventListener('click', (e) => { e.preventDefault(); fileInput.click(); });
+
+        // Drag & drop handling
+        ['dragenter', 'dragover'].forEach(ev => {
+            dropArea.addEventListener(ev, (e) => { e.preventDefault(); e.stopPropagation(); dropArea.classList.add('dragover'); });
+        });
+        ['dragleave', 'drop'].forEach(ev => {
+            dropArea.addEventListener(ev, (e) => { e.preventDefault(); e.stopPropagation(); dropArea.classList.remove('dragover'); });
+        });
+        dropArea.addEventListener('drop', (e) => {
+            const files = e.dataTransfer.files;
+            if (!files?.length) return;
+            fileInput.files = files;
+            onFileChosen(files[0]);
+        });
+
+        fileInput.addEventListener('change', () => {
+            const f = fileInput.files[0];
+            if (f) onFileChosen(f);
+        });
+
+        function onFileChosen(f) {
+            fileName.style.display = 'block';
+            fileName.textContent = `Selected: ${f.name} • ${(f.size / 1024 / 1024).toFixed(2)} MB`;
+            analyzeBtn.disabled = false;
+        }
+
+        // Analyze click (demo: loading state + mock finish)
+        analyzeBtn.addEventListener('click', async () => {
+            // analyzeBtn.disabled = true;
+            ctaSpinner.style.display = 'inline-block';
+
+            // TODO: replace this with your real upload/processing request
+            await new Promise(r => setTimeout(r, 1600));
+
+            ctaSpinner.style.display = 'none';
+            analyzeBtn.disabled = false;
+            alert('File uploaded and analysis started (demo). Replace with your real handler.');
+        });
+    </script>
 </body>
-</html>
 
+</html>
